@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japan Family Trip 2026 - Master File</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        .hero-bg { 
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover; background-position: center;
+        }
+        .city-group { transition: all 0.3s ease; }
+        .tokyo-border { border-left: 6px solid #bc002d; }
+        .kanazawa-border { border-left: 6px solid #2d3436; }
+        .alpes-border { border-left: 6px solid #00b894; }
+        .kyoto-border { border-left: 6px solid #6c5ce7; }
+        .island-border { border-left: 6px solid #0984e3; }
+        .hakone-border { border-left: 6px solid #e17055; }
+        
+        .animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const itineraryData = [
+            { date: "29/06", city: "Tokyo", theme: "Arrivée", morning: "—", afternoon: "Arrivée NRT 16:05. Transfert Shinjuku.", evening: "Dîner : Shinjuku-sanchome", transport: "N'EX (16:45-18:10) - Transfert Hôtel Taxi 5 min", hotel: "Pasela Living (Shinjuku)", logistics: "Porter bagages" },
+            { date: "30/06", city: "Tokyo", theme: "Forêt & Contrastes", morning: "Meiji-jingu (8:30-11:00)", afternoon: "Harajuku & Mairie de Tokyo (Vue)", evening: "Omoide Yokocho", transport: "Marche ou JR Yamanote", tips: "Réception hôtel : appeler pour Myoryuji (Ninja Temple)." },
+            { date: "01/07", city: "Tokyo", theme: "Vieux Tokyo", morning: "Asakusa (Senso-ji) & SkyTree", afternoon: "Yanaka Ginza (Old Tokyo)", evening: "Ameyoko Market (Ueno)", transport: "Ligne Ginza / Yamanote", tips: "Yanaka est le secret pour éviter la foule d'Harajuku." },
+            { date: "02/07", city: "Tokyo", theme: "Zen & Océan", morning: "Kamakura (Grand Bouddha)", afternoon: "Hokoku-ji (Bambous)", evening: "Dîner Kamakura ou Shinjuku", transport: "JR Shonan-Shinjuku + Enoden", logistics: "ENVOI BAGAGES vers Kanazawa (Takkyubin)" },
+            { date: "03/07", city: "Tokyo", theme: "Torii & Vintage", morning: "Nezu-jinja (Torii rouges)", afternoon: "Shimokitazawa (Friperies - Top Ados)", evening: "Shinjuku / Magasin Hands", transport: "Métro Chiyoda / Odakyu" },
+            { date: "04/07", city: "Kanazawa", theme: "Saveurs", morning: "Train Tokyo -> Kanazawa (9:32-12:05)", afternoon: "Marché Omicho & Higashi Chaya", evening: "Dîner Gare Forus", transport: "Shinkansen Hokuriku", hotel: "Hotel Nikko Kanazawa", tips: "Glace feuille d'or chez Hakuichi." },
+            { date: "05/07", city: "Kanazawa", theme: "Jardin & Art", morning: "Jardin Kenrokuen (8:30)", afternoon: "Musée 21e Siècle (Swimming Pool)", evening: "Rivière Asanogawa", transport: "Bus Loop (Pass 800Y)", tips: "Le musée est une bulle de fraîcheur vitale." },
+            { date: "06/07", city: "Kanazawa", theme: "Samouraï & Ninja", morning: "Quartier Nagamachi (Maison Nomura)", afternoon: "Temple Myoryuji (Ninja Temple)", evening: "Dîner Katamachi", transport: "Bus Loop / Taxi", tips: "Myoryuji : architecture labyrinthe fascinante pour les ados." },
+            { date: "07/07", city: "Alpes", theme: "Villages Traditionnels", morning: "Bus Kanazawa -> Shirakawa (8:10-9:25)", afternoon: "Bus Shirakawa -> Takayama (13:15-14:15)", evening: "Dîner Vieux Takayama", transport: "Nohi Bus", hotel: "Residence Hotel Takayama", logistics: "ENVOI BAGAGES Kanazawa -> Kyoto (Sac à dos 24h)" },
+            { date: "08/07", city: "Kyoto", theme: "Transition", morning: "Matinée Takayama (Marché)", afternoon: "Train Takayama -> Kyoto (15:34-19:17)", evening: "Dîner Rivière Kamo", transport: "Hida 36 (Direct)", hotel: "Kyoto Riverview House", logistics: "Récupération valises à l'hôtel" },
+            { date: "09/07", city: "Kyoto", theme: "Zen & Manga", morning: "Daitoku-ji (Jardins)", afternoon: "Musée du Manga (Repos frais)", evening: "Pontocho (Lanternes)", transport: "Bus 205 / Taxi", tips: "Musée du Manga : climatisé, idéal entre 13h et 16h." },
+            { date: "10/07", city: "Kyoto", theme: "Samouraïs", morning: "Château de Nijo", afternoon: "Samurai Museum (Interactif)", evening: "Gion / Temple Kennin-ji", transport: "Bus 9/50 / Taxi", tips: "À 4, le taxi est souvent plus rentable que le bus." },
+            { date: "11/07", city: "Kyoto", theme: "Thé Matcha", morning: "Uji : Byodo-in (Pavillon Phénix)", afternoon: "Uji : Atelier Matcha & Rivière", evening: "Shopping Teramachi", transport: "Ligne Keihan (Shichijo)", tips: "Teramachi : paradis vintage et arcades pour les ados." },
+            { date: "12/07", city: "Kyoto", theme: "Insolite Arashiyama", morning: "Otagi Nenbutsu-ji (1200 statues)", afternoon: "Parc des Singes (Vue)", evening: "Okonomiyaki vers Shichijo", transport: "Taxi recommandé -> Otagi", tips: "Rythme sieste : 8h-12h visite / 13h-16h repos." },
+            { date: "13/07", city: "Naoshima", theme: "Châteaux & Art", morning: "Train Kyoto -> Himeji (8:30-9:15) + Château", afternoon: "Trajet vers Naoshima (Arrivée 15:20)", evening: "Dîner bord de mer", transport: "Shinkansen + Ferry", hotel: "Seaside Stay (Naoshima)", logistics: "ENVOI BAGAGES Kyoto -> Tokyo (Sac à dos Naoshima/Hakone)" },
+            { date: "14/07", city: "Naoshima", theme: "Île Musée", morning: "Location vélos électriques", afternoon: "Musée Chichu (Résa obligatoire)", evening: "Terrasse Seaside", transport: "Vélos / Navettes", tips: "Réserver Chichu 60 jours à l'avance." },
+            { date: "15/07", city: "Hakone", theme: "Sources Chaudes", morning: "Ferry + Train vers Odawara (11:53-14:35)", afternoon: "Installation Hotel Hakone", evening: "Dîner Kaiseki", transport: "Shinkansen Okayama-Odawara", hotel: "WPÜ Hotel" },
+            { date: "16/07", city: "Hakone", theme: "Nature", morning: "Hakone Loop (Bateau / Câble)", afternoon: "Onsen & Détente", evening: "Ryokan", transport: "Hakone Free Pass", tips: "Le pass couvre tous les transports locaux." },
+            { date: "17/07", city: "Tokyo", theme: "Immersion Finale", morning: "Romancecar vers Shinjuku (10:30-11:50)", afternoon: "Nihonbashi / Art Aquarium", evening: "Dîner Ningyocho (Sukiyaki)", transport: "Romancecar (GSE)", hotel: "Ito Ryokan (Tokyo Suite)", tips: "Récupération des valises envoyées de Kyoto." },
+            { date: "18/07", city: "Tokyo", theme: "Histoire & Futurisme", morning: "Fukagawa Edo Museum (9h30-12h)", afternoon: "TeamLab Planets (On marche dans l'eau)", evening: "Quais de Monzen-Nakacho", transport: "Métro / Bus", tips: "Planets : chaussures faciles à enlever (pieds nus)." },
+            { date: "19/07", city: "Tokyo", theme: "Shopping Zen", morning: "Marché Tsukiji & Hama-rikyu", afternoon: "Daikanyama (Petit Paris)", evening: "Dîner d'adieu Ebisu", transport: "Ligne Hibiya", tips: "Daikanyama est chic et calme pour les ados." },
+            { date: "20/07", city: "Départ", theme: "Souvenirs", morning: "Ningyocho Walk & Gâteaux", afternoon: "Départ Narita (Vol 17:15)", evening: "—", transport: "Limousine Bus depuis T-CAT", tips: "T-CAT à 10 min à pied de l'Ito Ryokan." }
+        ];
+
+        const expertTipsData = {
+            Tokyo: [
+                { cat: "Climat", strategy: "Rythme 8h-12h impératif en juillet. Après 13h, visez les musées climatisés (Fukagawa, TeamLab) ou les grands magasins.", group4: "Pasela Living : profitez de l'espace pour une pause fraîcheur l'après-midi." },
+                { cat: "Transport", strategy: "Cartes Suica sur iPhone (Apple Wallet) pour tout le monde. Taxi via application GO rentable pour les trajets de moins de 15 min à 4.", group4: "T-CAT de Suitengumae est le hub idéal pour le Limousine Bus vers Narita sans stress." },
+                { cat: "Secrets", strategy: "Yanaka Ginza pour le Tokyo authentique. Shimokitazawa pour la mode vintage (mieux qu'Akihabara pour les ados).", group4: "Photo Purikura à Shinjuku : le souvenir culte à ne pas rater." },
+                { cat: "TeamLab", strategy: "Planets (Toyosu) est plus immersif et rafraîchissant (on y marche dans l'eau).", group4: "Réservation J-60 obligatoire. Portez des pantalons faciles à relever." }
+            ],
+            Kanazawa: [
+                { cat: "Logistique", strategy: "Hôtel Nikko face à la gare : idéal pour le départ tôt vers Shirakawa-go.", group4: "Feuille d'or à Higashi Chaya : testez la glace chez Hakuichi." },
+                { cat: "Ninja Temple", strategy: "Myoryuji : architecture labyrinthe. Réservation par téléphone uniquement (1 semaine avant).", group4: "Demandez à l'hôtel de Tokyo d'appeler pour vous le 30 juin." },
+                { cat: "Jardin", strategy: "Kenrokuen à 8h30 max. Le Musée du 21e siècle est parfait pour l'après-midi (climatisé).", group4: "Pass Loop Bus rentabilisé dès 4 trajets." }
+            ],
+            Kyoto: [
+                { cat: "Chaleur", strategy: "Kyoto est une cuvette humide. Rythme sieste vital. Musée du Manga = refuge climatisé.", group4: "Taxi vs Bus : à 4, le taxi gagne sur tous les plans (confort + prix similaire)." },
+                { cat: "Culture", strategy: "Teramachi/Shinkyogoku pour le shopping ados en soirée. Berges de la Kamo pour l'ambiance.", group4: "Cérémonie du thé : les sessions 'Private' sont souvent plus rentables à 4." },
+                { cat: "Transport", strategy: "Ligne Keihan depuis Shichijo pour Uji (évite les bus bondés de la gare).", group4: "Taxi Van vers la gare le 13/07 : à réserver dès l'arrivée à l'hôtel." }
+            ]
+        };
+
+        const getCityClass = (city) => {
+            if (city.includes("Tokyo")) return "tokyo-border";
+            if (city.includes("Kanazawa")) return "kanazawa-border";
+            if (city.includes("Alpes") || city.includes("Takayama")) return "alpes-border";
+            if (city.includes("Kyoto")) return "kyoto-border";
+            if (city.includes("Naoshima")) return "island-border";
+            if (city.includes("Hakone")) return "hakone-border";
+            return "border-slate-200";
+        };
+
+        const groupedData = itineraryData.reduce((acc, day) => {
+            const lastGroup = acc[acc.length - 1];
+            if (lastGroup && lastGroup.city === day.city) {
+                lastGroup.days.push(day);
+            } else {
+                acc.push({ city: day.city, days: [day] });
+            }
+            return acc;
+        }, []);
+
+        const InteractiveMap = () => {
+            useEffect(() => {
+                const map = L.map('map', {zoomControl: false, scrollWheelZoom: false}).setView([35.6895, 137.6917], 6);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
+                const points = [
+                    {name: "Tokyo", coords: [35.6895, 139.6917]},
+                    {name: "Kanazawa", coords: [36.5613, 136.6562]},
+                    {name: "Takayama", coords: [36.1408, 137.2583]},
+                    {name: "Kyoto", coords: [35.0116, 135.7681]},
+                    {name: "Naoshima", coords: [34.4597, 133.9961]},
+                    {name: "Hakone", coords: [35.2324, 139.1033]}
+                ];
+                L.polyline(points.map(p => p.coords), {color: '#bc002d', weight: 2, dashArray: '5, 10'}).addTo(map);
+                points.forEach(p => {
+                    L.circleMarker(p.coords, {radius: 5, color: '#bc002d', fillOpacity: 1}).addTo(map).bindPopup(p.name);
+                });
+                return () => map.remove();
+            }, []);
+            return <div id="map" className="h-48 shadow-inner rounded-2xl mb-6"></div>;
+        };
+
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('itinerary');
+            const [openCity, setOpenCity] = useState("Tokyo");
+
+            return (
+                <div className="min-h-screen pb-12">
+                    <header className="hero-bg text-white py-16 px-6 text-center shadow-lg mb-8">
+                        <h1 className="text-5xl font-bold mb-2 tracking-tighter italic">Japan 2026</h1>
+                        <p className="text-sm opacity-90 font-light tracking-[0.3em] uppercase">Master Travel Guide</p>
+                    </header>
+
+                    <div className="max-w-4xl mx-auto px-4">
+                        <nav className="flex gap-1 mb-8 bg-white p-1.5 rounded-2xl shadow-sm overflow-x-auto">
+                            {[
+                                { id: 'itinerary', label: 'Itinéraire', icon: 'fa-route' },
+                                { id: 'deadlines', label: 'Dates Clés', icon: 'fa-calendar-check' },
+                                { id: 'hotels', label: 'Hôtels', icon: 'fa-hotel' },
+                                { id: 'tips', label: 'Tips Experts', icon: 'fa-lightbulb' }
+                            ].map(tab => (
+                                <button key={tab.id} onClick={() => setActiveTab(tab.id)} 
+                                        className={`flex-1 min-w-[100px] py-3 rounded-xl text-xs font-bold transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
+                                    <i className={`fas ${tab.icon} mr-2`}></i>{tab.label}
+                                </button>
+                            ))}
+                        </nav>
+
+                        {activeTab === 'itinerary' && (
+                            <div className="space-y-4 animate-fadeIn">
+                                <InteractiveMap />
+                                {groupedData.map((group, idx) => (
+                                    <div key={idx} className={`bg-white rounded-2xl shadow-sm overflow-hidden city-group ${getCityClass(group.city)}`}>
+                                        <button onClick={() => setOpenCity(openCity === group.city ? null : group.city)} className="w-full flex items-center justify-between p-5">
+                                            <div className="text-left">
+                                                <h2 className="text-xl font-bold text-slate-800">{group.city}</h2>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{group.days.length} ÉTAPES</p>
+                                            </div>
+                                            <i className={`fas fa-chevron-${openCity === group.city ? 'up' : 'down'} text-slate-300 text-xs`}></i>
+                                        </button>
+                                        {openCity === group.city && (
+                                            <div className="px-5 pb-5 space-y-3 border-t border-slate-50 pt-4">
+                                                {group.days.map((day, dIdx) => (
+                                                    <div key={dIdx} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <span className="text-[10px] font-black text-slate-400">{day.date}</span>
+                                                            <h3 className="font-bold text-sm text-slate-700">{day.theme}</h3>
+                                                        </div>
+                                                        <div className="grid md:grid-cols-2 gap-4 text-xs">
+                                                            <div className="space-y-1">
+                                                                <p><span className="text-slate-400 font-bold uppercase text-[9px] w-10 inline-block">Matin</span> {day.morning}</p>
+                                                                <p><span className="text-slate-400 font-bold uppercase text-[9px] w-10 inline-block">Midi</span> {day.afternoon}</p>
+                                                                <p><span className="text-slate-400 font-bold uppercase text-[9px] w-10 inline-block">Soir</span> {day.evening}</p>
+                                                            </div>
+                                                            <div className="bg-white p-2 rounded-lg border border-slate-100 text-[11px] text-slate-500">
+                                                                <p className="mb-1"><i className="fas fa-train mr-2 text-blue-300"></i>{day.transport}</p>
+                                                                {day.hotel && <p className="mb-1 font-bold text-slate-700"><i className="fas fa-bed mr-2 text-blue-300"></i>{day.hotel}</p>}
+                                                                {day.logistics && <p className="text-red-500 font-bold"><i className="fas fa-truck-loading mr-2"></i>{day.logistics}</p>}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'deadlines' && (
+                            <div className="space-y-6 animate-fadeIn">
+                                <div className="bg-white p-6 rounded-3xl border-t-4 border-red-500 shadow-sm">
+                                    <h3 className="text-lg font-bold mb-4 text-red-600 italic">J-30 : Réservations Critiques (Ouverture 10h JP)</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { date: "29 Mai", item: "Shinkansen Tokyo ➔ Kanazawa", note: "Smart-EX App" },
+                                            { date: "07 Juin", item: "Nohi Bus (Kanazawa ➔ Takayama)", note: "Via site officiel" },
+                                            { date: "08 Juin", item: "Train Hida (Takayama ➔ Kyoto)", note: "JR West" },
+                                            { date: "15 Juin", item: "Romancecar GSE (Hakone ➔ Shinjuku)", note: "Siège 'Front View'" }
+                                        ].map((d, i) => (
+                                            <div key={i} className="flex items-center justify-between text-sm border-b border-slate-50 pb-2">
+                                                <span className="font-bold text-slate-800">{d.date}</span>
+                                                <span className="text-slate-600">{d.item}</span>
+                                                <span className="bg-red-50 text-red-500 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{d.note}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-white p-6 rounded-3xl border-t-4 border-blue-500 shadow-sm">
+                                    <h3 className="text-lg font-bold mb-4 text-blue-600 italic">J-60 & Logistique Expériences</h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { date: "Avril/Mai", item: "Musée Chichu (Naoshima)", note: "60 jours avant" },
+                                            { date: "10 Juin", item: "Musée Ghibli (Optionnel)", note: "Vente mondiale" },
+                                            { date: "Fin Mai", item: "TeamLab Planets & Shibuya Sky", note: "Dès ouverture" },
+                                            { date: "30 Juin", item: "Réserver Temple Myoryuji", note: "Via hôtel Tokyo" }
+                                        ].map((d, i) => (
+                                            <div key={i} className="flex items-center justify-between text-sm border-b border-slate-50 pb-2">
+                                                <span className="font-bold text-slate-800">{d.date}</span>
+                                                <span className="text-slate-600">{d.item}</span>
+                                                <span className="bg-blue-50 text-blue-500 text-[10px] px-2 py-0.5 rounded font-bold uppercase">{d.note}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-800 p-6 rounded-3xl text-white shadow-sm">
+                                    <h3 className="text-lg font-bold mb-4 italic text-yellow-400">Rappel Envois Bagages (Takkyubin)</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                        <div className="bg-slate-700/50 p-3 rounded-xl">
+                                            <p className="font-bold text-yellow-400 mb-1">02 JUILLET</p>
+                                            <p>Tokyo ➔ Kanazawa</p>
+                                            <p className="opacity-60">Voyage léger le 04/07</p>
+                                        </div>
+                                        <div className="bg-slate-700/50 p-3 rounded-xl">
+                                            <p className="font-bold text-yellow-400 mb-1">07 JUILLET</p>
+                                            <p>Kanazawa ➔ Kyoto</p>
+                                            <p className="opacity-60">Indispensable pour Shirakawa</p>
+                                        </div>
+                                        <div className="bg-slate-700/50 p-3 rounded-xl">
+                                            <p className="font-bold text-yellow-400 mb-1">13 JUILLET</p>
+                                            <p>Kyoto ➔ Tokyo (Ito Ryokan)</p>
+                                            <p className="opacity-60">Pour Naoshima/Hakone</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'hotels' && (
+                            <div className="grid gap-4 animate-fadeIn">
+                                {[
+                                    { name: "Pasela Living Shinjuku", city: "Tokyo", type: "Appartement Famille • Cuisine & Lave-linge", color: "tokyo-border" },
+                                    { name: "Hotel Nikko Kanazawa", city: "Kanazawa", type: "Grand Standing • Face à la gare", color: "kanazawa-border" },
+                                    { name: "Residence Hotel Takayama", city: "Takayama", type: "Confort • Style Studio", color: "alpes-border" },
+                                    { name: "Kyoto Riverview House", city: "Kyoto", type: "Vue Rivière • Près station Shichijo", color: "kyoto-border" },
+                                    { name: "Seaside Stay Naoshima", city: "Naoshima", type: "Bord de Mer • Expérience insulaire", color: "island-border" },
+                                    { name: "WPÜ hotel", city: "Hakone", type: "Montagne", color: "hakone-border" },
+                                    { name: "Ito Ryokan", city: "Tokyo (Nihonbashi)", type: "Suite Traditionnelle • Quartier Ningyocho", color: "tokyo-border" }
+                                ].map((hotel, i) => (
+                                    <div key={i} className={`bg-white p-5 rounded-2xl flex justify-between items-center shadow-sm border ${hotel.color}`}>
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-sm">{hotel.name}</h4>
+                                            <p className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">{hotel.city} — {hotel.type}</p>
+                                        </div>
+                                        <i className="fas fa-bed text-slate-100 text-2xl"></i>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'tips' && (
+                            <div className="space-y-10 animate-fadeIn">
+                                <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
+                                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 italic">
+                                        <i className="fas fa-bolt text-yellow-400"></i> Résumé Stratégique Exhaustif
+                                    </h3>
+                                    <ul className="space-y-4 text-sm opacity-90">
+                                        <li className="flex gap-3"><span className="text-yellow-400 font-black">01</span> <b>La règle d'or du climat :</b> En juillet, le Japon est une étuve. On sort à 8h, on rentre à 13h, on ressort à 17h. Pas de compromis.</li>
+                                        <li className="flex gap-3"><span className="text-yellow-400 font-black">02</span> <b>Le salut par le Takkyubin :</b> Ne portez JAMAIS vos 4 valises dans le métro ou les Shinkansen bondés. Les envois bagages coûtent ≈15€/valise et changent la vie.</li>
+                                        <li className="flex gap-3"><span className="text-yellow-400 font-black">03</span> <b>Tactique Transports :</b> À 4, le taxi (App GO) est votre meilleur ami pour les trajets courts. Suica dématérialisée sur iPhone pour tout le reste.</li>
+                                        <li className="flex gap-3"><span className="text-yellow-400 font-black">04</span> <b>Spécial Ados :</b> Mixez les temples le matin avec du shopping/gaming l'après-midi (Shimokitazawa, Teramachi, Arcades).</li>
+                                    </ul>
+                                </div>
+
+                                {Object.entries(expertTipsData).map(([city, tips], idx) => (
+                                    <div key={city} className="space-y-4">
+                                        <h3 className={`text-xl font-black italic flex items-center gap-3 ${
+                                            city === 'Tokyo' ? 'text-red-600' : city === 'Kanazawa' ? 'text-slate-800' : 'text-purple-600'
+                                        }`}>
+                                            <span className="w-6 h-6 rounded-full bg-current opacity-10 flex items-center justify-center text-[10px] not-italic">0{idx+1}</span>
+                                            {city}
+                                        </h3>
+                                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left text-xs">
+                                                    <thead>
+                                                        <tr className="bg-slate-50 border-b border-slate-100">
+                                                            <th className="p-4 font-black uppercase tracking-widest text-slate-400 w-1/4">Catégorie</th>
+                                                            <th className="p-4 font-black uppercase tracking-widest text-slate-400">Conseil & Groupe de 4</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-50">
+                                                        {tips.map((tip, i) => (
+                                                            <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                                                <td className="p-4 align-top font-bold text-slate-800">{tip.cat}</td>
+                                                                <td className="p-4">
+                                                                    <p className="text-slate-600 mb-1">{tip.strategy}</p>
+                                                                    <p className="text-blue-500 font-bold italic text-[10px]">💡 Note : {tip.group4}</p>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <footer className="mt-16 text-center text-slate-300 text-[10px] uppercase tracking-[0.4em]">
+                        Japan 2026 • Verified Expert Content Edition
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
